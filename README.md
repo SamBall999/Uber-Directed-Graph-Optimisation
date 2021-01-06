@@ -21,10 +21,11 @@ Specifies drivers at nodes 0, 4 and 6 with a petrol consumption factor of 3, 2 a
 The petrol factor is then used to determine the best driver as the total cost of the route is multiplied by the petrol factor, and then the driver with the minimum overall cost is chosen. The petrol factor is also used when finding the best route for each leg of the journey in order that the correct overall cost may be determined. 
 
 An example of this feature works as follows:
-The input 
-8
-0 1 2 2 5 
-1 0 3 3 4
+Input:
+```
+8  
+0 1 2 2 5   
+1 0 3 3 4 
 2 5 9 6 4 7 17 
 3 1 7 4 5
 4 2 11
@@ -36,9 +37,9 @@ The input
 3
 2 5 
 #
-
+````
 will result in an output of 
-
+```
 client 2 5
 truck 4
 4 2
@@ -46,6 +47,7 @@ pickup 2
 multiple solutions cost 18
 dropoff 5
 5 3 4
+````
 
 It can be seen that truck 4 is chosen as the best driver due to a combination of its proximity and lower petrol factor. Thus if the petrol consumption factors were to be changed, a different result would occur. (This is a variation of the example given in the brief and thus the differences between the original and added petrol feature are evident, as truck 0 is chosen in the original brief.)
 
@@ -78,6 +80,7 @@ For example, the line
 Indicates that the weight of the edge from vertex 2 to vertex 6 must be increased by two in order to reflect moderate traffic.
 
 A full example of this feature works as follows:
+```
 8
 0 1 2 2 5 
 1 0 3 3 4
@@ -94,8 +97,10 @@ A full example of this feature works as follows:
 -1 2 6 2
 2 5
 #
+````
 
 Giving an output of:
+```
 client 2 5
 truck 4
 4 2
@@ -110,6 +115,7 @@ pickup 2
 2 5
 dropoff 5
 5 3 4
+````
 
 It can be seen that before the traffic update, the weightings were such that there were multiple solutions for the route from 2 to 5. After the traffic update, there is only one route from 2 to 5. This occurred as the edge from 2 to 6 has increased in weight and thus the alternative route not including this edge is cheaper.
 
@@ -117,6 +123,7 @@ It can be seen that before the traffic update, the weightings were such that the
 
 ## Final Input Format
 
+```
 <number of nodes><newline>
 {<source node number> {<destination node number> <weight>}*<newline>}* 
 <number of UberHaul drivers><newline>
@@ -125,5 +132,6 @@ It can be seen that before the traffic update, the weightings were such that the
 {<pick-up/source node number> <drop-off/destination node number>}*<newline>
 {<flag> <startNode> <endNode> <newWeight>}*<newline>
 #
+````
 
 It is important to note that a # must be entered after all input in order to signify the end of the input
