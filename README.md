@@ -1,12 +1,101 @@
 # Uber-Weighted-Directed-Graph-Optimization
 
+## Objective
+- Perform graph optimisation for a problem simulating an 'UberHaul' service to transport goods from one location to another.
+- Find the lowest cost trip from the driver's home to the client's pick up point to the client's drop off point and back to the driver's home.
+
+## Implementation
+The routes that 'UberHaul' drivers take to perform the transport service are modelled as edges in a _weighted directed graph_.
+Dijkstra's algorithm is used to calculate the lowest cost path for each transport request.
+
 ## Use
+
+### Standard Input Format
+The input format includes three main aspects:
+- Information regarding number of nodes and edge weights representing _locations and journey costs_
+- Number of _available drivers_ and their current home node positions
+- Number of _delivery requests_ and desired pick up and drop off locations
+
+```
+<number of nodes><newline>
+{<source node number> {<destination node number> <weight>}*<newline>}* 
+<number of UberHaul drivers><newline>
+{<driver’s home node number>}*<newline>
+<number of delivery requests><newline>
+{<pick-up/source node number> <drop-off/destination node number>}*<newline>
+````
+
+where {x}* indicates zero or more of item x.
+
+### Standard Output Format
+The output specifies which truck driver can help each respective client as well as the cost for each segment of the journey.
+
+```
+client <node Pi> <node Di>
+truck <driver’s home node number Tx>
+<shortest path from Tx to Pi>
+pickup <Pi>
+<shortest path from Pi to Di>
+dropoff <Di>
+<shortest path from Di to Tx>
+````
+
+where _Pi_ and _Di_ represents the client's pick up and drop off nodes respectively and _Tx_ represents the driver's home.
+
+### Example
+
+For example, given the following input:
+
+```
+8           # total number of nodes/locations
+0 1 2 2 5   # specifies edge weights from Node 0 to Node 1 and Node 2 respectively
+1 0 3 3 4   
+2 5 9 6 4 7 17 
+3 1 7 4 5
+4 2 11
+5 3 9
+6 5 5
+7
+3           # number of available UberHaul drivers
+0 4 6       # specifies current location of driver's home nodes
+3           # number of delivery requests
+2 5 5 1 3 7 # specifies pick up and drop off node numbers
+````
+
+The preceding input corresponds to the following graph with nodes representing locations and edges representing the cost of the journey:
+
+<img src="example_directed_graph.png" alt="Directed graph representing available truck drivers, potential routes and corresponding costs." width="450"/>
+
+This corresponds to the following output:
+
+```
+client 2 5  # specifies client pick up and drop off nodes
+truck 0     # corresponding truck node best suited for request
+0 2         # journey from driver home to pick up
+pickup 2
+multiple solutions cost 9
+dropoff 5
+5 3 1 0
+client 5 1
+truck 0
+multiple solutions cost 14
+pickup 5
+5 3 1
+dropoff 1
+1 0
+client 3 7
+cannot be helped
+````
+
+
+
+
 
 ## Advanced Features 
 
 ### 1. Petrol Consumption according to Size of Truck
 
-Trucks are rated according to size as follows:
+As an additional feature, the relative petrol consumption of different size of trucks is included by adding a petrol consumption factor. Trucks are rated according to size as follows:
 - S - 1
 - M - 2
 - L - 3
@@ -49,7 +138,7 @@ dropoff 5
 5 3 4
 ````
 
-It can be seen that truck 4 is chosen as the best driver due to a combination of its proximity and lower petrol factor. Thus if the petrol consumption factors were to be changed, a different result would occur. (This is a variation of the example given in the brief and thus the differences between the original and added petrol feature are evident, as truck 0 is chosen in the original brief.)
+It can be seen that truck 4 is chosen as the best driver due to a combination of its proximity and lower petrol factor. Thus if the petrol consumption factors were to be changed, a different result would occur. (This is a variation of the original example and thus the differences between the original and added petrol feature are evident, as truck 0 is chosen in the original example.)
 
 It can also be observed that the overall cost of the route has been altered by the petrol factor, as can be seen by the 'multiple solutions cost 18' line which was originally 'multiple solutions cost 9'. Hence the effects of the multiplying factor can be clearly seen.  
 
