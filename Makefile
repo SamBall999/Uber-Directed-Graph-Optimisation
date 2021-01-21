@@ -12,7 +12,6 @@ $(BINDIR)/%.class: $(SRCDIR)/%.java
 
 $(BINDIR)/SimulatorTwo.class: $(BINDIR)/Graph.class $(SRCDIR)/SimulatorTwo.java
 
-
 docs:
 	javadoc -classpath $(BINDIR) -d $(DOCDIR) $(SRCDIR)/*.java
 
