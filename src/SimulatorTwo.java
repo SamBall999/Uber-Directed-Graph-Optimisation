@@ -58,7 +58,7 @@ public class SimulatorTwo {
 	public void getRoadNetworkInput() {
 		
 		Scanner sc = new Scanner(System.in);
-		System.out.println("Road Network Construction");
+		System.out.println("\n---Road Network Construction---");
 		System.out.println("Please enter the number of locations (nodes) in the road network");
 		//int nodeNum = Integer.parseInt(sc.nextLine());
 		graphState.put("NodeNum", sc.nextLine()); //save new number of nodes into graph state dict
@@ -81,7 +81,7 @@ public class SimulatorTwo {
 	public void getDriverInformation() {
 		
 		Scanner sc = new Scanner(System.in);
-		System.out.println("Enter Available Truck Driver Information");
+		System.out.println("\n---Enter Available Truck Driver Information---");
 		System.out.println("Please enter the number of available UberHaul drivers");
 		//int driverNum = Integer.parseInt(sc.nextLine());
 		graphState.put("DriverNum", sc.nextLine());
@@ -106,7 +106,7 @@ public class SimulatorTwo {
 	public void makeDeliveryRequests() {
 
 		Scanner sc = new Scanner(System.in);
-		System.out.println("Make Delivery Request");
+		System.out.println("\n---Make Delivery Request---");
 		System.out.println("Please enter the number of delivery requests");
 		graphState.put("RequestNum", sc.nextLine());
 		int deliveryRequests = Integer.parseInt(graphState.get("RequestNum"));
@@ -114,6 +114,32 @@ public class SimulatorTwo {
 		graphState.put("RequestInfo", sc.nextLine());
 		processDeliveryRequests();
 	
+	}
+
+
+	/**
+    *Reads in input and processes changes to graph edge weights according to traffic updates. 
+    *
+    */ 
+	public void processTrafficUpdates() {
+
+		Scanner sc = new Scanner(System.in);
+		System.out.println("\n---Report Traffic Update---"); 
+		System.out.println("The effect of traffic is represented on a scale from 1-5:");
+		System.out.println("1 - Light");
+		System.out.println("2 - Moderate");
+		System.out.println("3 - Congested");
+		System.out.println("4 - Heavy");
+		System.out.println("5 - Traffic jam");
+		System.out.println("Please enter the traffic updates in the format: <source_node> <destination_node> <traffic_factor> <source_node> <destination_node> <traffic_factor> <source_node> <destination_node> <traffic_factor> ...");
+		//process traffic updates
+		String[] trafficUpdates = sc.nextLine().split(" ");
+		for(int i = 0; i < trafficUpdates.length/3; i+=3) {
+			String node = trafficUpdates[i];
+			String dest = trafficUpdates[i+1];
+			int cost = Integer.parseInt(trafficUpdates[i+2]);
+			g.setCost(node, dest, cost);
+		}
 	}
 
 
@@ -143,31 +169,6 @@ public class SimulatorTwo {
 			l+=2;
 		}
 	
-	}
-
-	/**
-    *Reads in input and processes changes to graph edge weights according to traffic updates. 
-    *
-    */ 
-	public void processTrafficUpdates() {
-
-		Scanner sc = new Scanner(System.in);
-		System.out.println("Report Traffic Update"); 
-		System.out.println("The effect of traffic is represented on a scale from 1-5:");
-		System.out.println("1 - Light");
-		System.out.println("2 - Moderate");
-		System.out.println("3 - Congested");
-		System.out.println("4 - Heavy");
-		System.out.println("5 - Traffic jam");
-		System.out.println("Please enter the traffic updates in the format: <source_node> <destination_node> <traffic_factor> <source_node> <destination_node> <traffic_factor> <source_node> <destination_node> <traffic_factor> ...");
-		//process traffic updates
-		String[] trafficUpdates = sc.nextLine().split(" ");
-		for(int i = 0; i < trafficUpdates.length/3; i+=3) {
-			String node = trafficUpdates[i];
-			String dest = trafficUpdates[i+1];
-			int cost = Integer.parseInt(trafficUpdates[i+2]);
-			g.setCost(node, dest, cost);
-		}
 	}
 
 
@@ -233,26 +234,14 @@ public class SimulatorTwo {
      */ 
 	public String chooseDriver(String pick, String drop) {
 
-					String driverNodes = graphState.get("DriverHomes");
-					System.out.println(driverNodes);
+					//String driverNodes = graphState.get("DriverHomes");
 					String[] homeNodeNums = graphState.get("DriverHomes").split(" ");
-					System.out.println(homeNodeNums.length);
-					System.out.println(graphState.get("DriverNum"));
-					for (int i = 0; i < (homeNodeNums.length-1); i++)
-					{
-						System.out.println(homeNodeNums[i]);
-					}
 					String[] petrolFactors = graphState.get("DriverSizes").split(" ");
-					for (int i = 0; i < (petrolFactors.length-1); i++)
-					{
-						System.out.println(petrolFactors[i]);
-					}
-					//int petrolFactor;
 					System.out.println("\nClient requesting service from node "+pick+" to node to " +drop);
 					// choose driver
 					ArrayList<Double> drivers = new ArrayList<Double>();
 					
-					for (int l = 0; l < (homeNodeNums.length-1); l++) 
+					for (int l = 0; l < (homeNodeNums.length); l++) //-1
 					{
 						// if infinity, go to next driver
 						if( g.getCost(homeNodeNums[l], pick) == g.INFINITY | g.getCost(pick, drop) == g.INFINITY | g.getCost(drop, homeNodeNums[l])== g.INFINITY) 
@@ -356,7 +345,6 @@ public class SimulatorTwo {
 			{
 				continue; //if field is empty
 			}
-			System.out.println(key_value[1].length());
 			String value = key_value[1].substring(1, key_value[1].length()); //remove preceding white space from each value
 			graphState.put(key_value[0], value); 
 		}

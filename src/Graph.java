@@ -18,11 +18,12 @@ public class Graph {
   	public Graph(String[] nodes) {
 
 		//for each node
-		for (int i = 0 ; i < (nodes.length-1); i++) {
+		for (int i = 0 ; i < nodes.length; i++) {
 
 			String[] edges = nodes[i].split(" ");
+			String source = edges[0];
 			//for each edge attached to the node
-			for(int j = 0; j<(edges.length-1); j+=2)
+			for(int j = 1; j< (edges.length-1); j+=2)
 			{
 				//check for blank line
 				if (edges.length == 1) {
