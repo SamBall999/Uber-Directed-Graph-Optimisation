@@ -13,6 +13,28 @@ public class Graph {
 	public static final double INFINITY = Double.MAX_VALUE;
 	private Map<String,Vertex> vertexMap = new HashMap<String,Vertex>( ); 
 	public int dist;
+
+	
+  	public Graph(String[] nodes) {
+
+		//for each node
+		for (int i = 0 ; i < (nodes.length-1); i++) {
+
+			String[] edges = nodes[i].split(" ");
+			//for each edge attached to the node
+			for(int j = 0; j<(edges.length-1); j+=2)
+			{
+				//check for blank line
+				if (edges.length == 1) {
+					break; //if no attached edges attached to the node
+				}
+				//add edges for that node
+				String destName = edges[j];
+				int cost = Integer.parseInt(edges[j+1]);
+				addEdge(Integer.toString(i), destName, cost);
+			}
+		}
+  	}
 	
 
 	private Vertex getVertex (String vertexName) {

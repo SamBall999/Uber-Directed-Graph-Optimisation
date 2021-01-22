@@ -1,5 +1,8 @@
 
 import java.util.*;
+import java.io.File;  
+import java.io.IOException; 
+import java.io.FileWriter;  
 
 
 //Fix petrol factor
@@ -23,12 +26,11 @@ import java.util.*;
  */
 public class SimulatorTwo {
 	
-	Graph g;
-	String[] homeNodeNums;
-	String[] petrolFactors;
-	//ArrayList<String> allRequests;
+	Graph g; //graph object to perform path optimization
+	Map<String, String> graphState; //write all information to the graph state
+	//String[] homeNodeNums;
+	//String[] petrolFactors;
 	int petrolFactor;
-	//String test = "8\n0 1 2 2 5\n1 0 3 3 4\n2 5 9 6 4 7 17\n3 1 7 4 5\n4 2 11\n5 3 9\n6 5 5\n7\n3\n0 3 4 2 6 3\n3\n2 5 5 1 3 7\n#";
 	
 	 /**
      *Prints information regarding cheapest route, truck chosen and route for each segment of the journey, including from the driver's home to pick up, pick up to drop off and drop off to home.
@@ -38,13 +40,13 @@ public class SimulatorTwo {
      *If the next value is -1, the next three values specify the traffic request in the format <startNode><endNode><newWeight>
      */
 	public static void main (String[] args) {
-		
-	
-		
+			
 		SimulatorTwo sim = new SimulatorTwo();
-		sim.g = new Graph( ); 
-		sim.createInterface();	//interface needs to be continuous	
-	
+		sim.loadGraphState(); //read in config from file
+		//sim.initGraph(); //create Graph object with given settings
+		String[] nodeInfo = sim.graphState.get("NodeConnections").split(";");
+		sim.g =  new Graph(nodeInfo);
+		sim.createInterface();	//interface needs to be continuous		
 		
 	}
 
@@ -58,98 +60,95 @@ public class SimulatorTwo {
 		Scanner sc = new Scanner(System.in);
 		System.out.println("Road Network Construction");
 		System.out.println("Please enter the number of locations (nodes) in the road network");
-		int nodeNum = Integer.parseInt(sc.nextLine());
-		String[] route_weights = null;
+		//int nodeNum = Integer.parseInt(sc.nextLine());
+		graphState.put("NodeNum", sc.nextLine()); //save new number of nodes into graph state dict
+		int nodeNum = Integer.parseInt(graphState.get("NodeNum"));
+		String node_info;
+		graphState.put("NodeConnections", ""); //clear previous node information
 		for (int i = 0; i<nodeNum; i++)
 		{
-			System.out.println("Please enter the route weights from source node " + i + " to other adjoining nodes in the format: <destination node number> <weight> <destination node number> <weight> ...");
-			route_weights = sc.nextLine().split(" ");
-			for(int j = 0; j<(route_weights.length); j+=2)
-			{
-				//check for blank line
-				if (route_weights.length == 1) {
-					break; //if no attached nodes
-				}
-				//add edges for that node
-				String destName = route_weights[j];
-				int cost = Integer.parseInt(route_weights[j+1]);
-				g.addEdge(Integer.toString(i), destName, cost);
-			}
+			System.out.println("Please enter the route weights from source node " + i + " to other adjoining nodes in the format: <source node number> <destination node number> <weight> <destination node number> <weight> ...");
+			node_info = sc.nextLine();
+			graphState.put("NodeConnections", graphState.get("NodeConnections") + node_info + ";"); //save new node connections
 		}
 	}
 
 
-	 /**
-     *Reads in input regarding number of available drivers and their respective home nodes and truck sizes. 
-     *
-     */ 
+	/**
+    *Reads in input regarding number of available drivers and their respective home nodes and truck sizes. 
+    *
+    */ 
 	public void getDriverInformation() {
 		
 		Scanner sc = new Scanner(System.in);
 		System.out.println("Enter Available Truck Driver Information");
 		System.out.println("Please enter the number of available UberHaul drivers");
-		int driverNum = Integer.parseInt(sc.nextLine());
+		//int driverNum = Integer.parseInt(sc.nextLine());
+		graphState.put("DriverNum", sc.nextLine());
 		System.out.println("Please enter the node numbers representing the home node of each driver in the format: <driver_0 home node number> <driver_1 home node number> <driver_2 home node number> ...");
-		homeNodeNums = sc.nextLine().split(" ");
+		//homeNodeNums = sc.nextLine().split(" ");
+		graphState.put("DriverHomes", sc.nextLine());
 		System.out.println("The petrol consumption of each truck is dependent on truck size which is represented on a scale from 1-4:");
 		System.out.println("1 - S");
 		System.out.println("2 - M");
 		System.out.println("3 - L");
 		System.out.println("4 - XL");
 		System.out.println("Please enter the truck sizes (1-4) affecting the petrol consumption of each driver in the format: <driver_0 truck_size> <driver_1 truck_size> <driver_2 truck_size> ...");
-		petrolFactors = sc.nextLine().split(" ");
+		//petrolFactors = sc.nextLine().split(" ");
+		graphState.put("DriverSizes", sc.nextLine());
 	}
 
 
-	 /**
-     *Reads in input regarding delivery requests. 
-     *
-     */ 
+	/**
+    *Reads in input regarding delivery requests. 
+    *
+    */ 
 	public void makeDeliveryRequests() {
 
 		Scanner sc = new Scanner(System.in);
 		System.out.println("Make Delivery Request");
 		System.out.println("Please enter the number of delivery requests");
-		int deliveryRequests = Integer.parseInt(sc.nextLine());
-		System.out.println("Please enter the delivery request source and destination nodes in the format: <pick-up node number> <drop-off node number> <pick-up node number> <drop-off node number> <pick-up node number> <drop-off node number>... #");
-		ArrayList<String> allRequests = new ArrayList<String>();
-		while (true)
-		{
-			String temp = sc.nextLine();
-			if(temp.equals("#"))
-			{
+		graphState.put("RequestNum", sc.nextLine());
+		int deliveryRequests = Integer.parseInt(graphState.get("RequestNum"));
+		System.out.println("Please enter the delivery request source and destination nodes in the format: <pick-up node number> <drop-off node number> <pick-up node number> <drop-off node number> <pick-up node number> <drop-off node number>... ");
+		graphState.put("RequestInfo", sc.nextLine());
+		processDeliveryRequests();
+	
+	}
+
+
+	/**
+    *Processes delivery requests and finds shortest route and optimal driver. 
+    *
+    */ 
+	public void processDeliveryRequests() {
+
+		String[] pickDrop = graphState.get("RequestInfo").split(" ");
+		int l = 0;
+		while (true) {
+			// request
+			String pick = pickDrop[l];
+			String drop = pickDrop[l+1];
+
+			// choose driver
+			String home = chooseDriver(pick, drop);
+
+			// get output
+			if (home != null) {
+				output(home, pick, drop);
+			}
+			if (l >= (pickDrop.length - 2)) {
 				break;
 			}
-			allRequests.add(temp);
-		}
-		for (int k = 0; k < allRequests.size(); k++) {
-			String[] pickDrop = allRequests.get(k).split(" ");
-			int l = 0;
-			while (true) {
-				// request
-				String pick = pickDrop[l];
-				String drop = pickDrop[l+1];
-
-				// choose driver
-				String home = chooseDriver(pick, drop);
-
-				// get output
-				if (home != null) {
-					output(home, pick, drop);
-				}
-				if (l >= (pickDrop.length - 2)) {
-					break;
-				}
-				l+=2;
-			}
+			l+=2;
 		}
 	
 	}
 
-	 /**
-     *Reads in input and processes changes to graph edge weights according to traffic updates. 
-     *
-     */ 
+	/**
+    *Reads in input and processes changes to graph edge weights according to traffic updates. 
+    *
+    */ 
 	public void processTrafficUpdates() {
 
 		Scanner sc = new Scanner(System.in);
@@ -172,10 +171,10 @@ public class SimulatorTwo {
 	}
 
 
-	 /**
-     *Generates user interface for UberHaul program. 
-     *
-     */ 
+	/**
+    *Generates user interface for UberHaul program. 
+    *
+    */ 
 	public void createInterface() {
 		
 		System.out.println("\n----- Welcome to the UberHaul Service -----");
@@ -212,6 +211,7 @@ public class SimulatorTwo {
 						break;
 				
 					case 5:
+						saveGraphState();
 						System.exit(0); //quit
 						break;
 
@@ -233,27 +233,34 @@ public class SimulatorTwo {
      */ 
 	public String chooseDriver(String pick, String drop) {
 
+					String driverNodes = graphState.get("DriverHomes");
+					System.out.println(driverNodes);
+					String[] homeNodeNums = graphState.get("DriverHomes").split(" ");
+					System.out.println(homeNodeNums.length);
+					System.out.println(graphState.get("DriverNum"));
+					for (int i = 0; i < (homeNodeNums.length-1); i++)
+					{
+						System.out.println(homeNodeNums[i]);
+					}
+					String[] petrolFactors = graphState.get("DriverSizes").split(" ");
+					for (int i = 0; i < (petrolFactors.length-1); i++)
+					{
+						System.out.println(petrolFactors[i]);
+					}
+					//int petrolFactor;
 					System.out.println("\nClient requesting service from node "+pick+" to node to " +drop);
 					// choose driver
 					ArrayList<Double> drivers = new ArrayList<Double>();
-					// split into two arrays
-					String[] driverIDs = new String[(homeNodeNums.length)/2];
-					String[] petrolFactors = new String[(homeNodeNums.length)/2];
-					for (int s = 0; s < driverIDs.length; s++){
-						driverIDs[s] = homeNodeNums[2*s];
-						petrolFactors[s] = homeNodeNums[2*s+1];
-						
-					}
 					
-					for (int l = 0; l < driverIDs.length; l++) 
+					for (int l = 0; l < (homeNodeNums.length-1); l++) 
 					{
 						// if infinity, go to next driver
-						if( g.getCost(driverIDs[l], pick) == g.INFINITY | g.getCost(pick, drop) == g.INFINITY | g.getCost(drop, driverIDs[l])== g.INFINITY) 
+						if( g.getCost(homeNodeNums[l], pick) == g.INFINITY | g.getCost(pick, drop) == g.INFINITY | g.getCost(drop, homeNodeNums[l])== g.INFINITY) 
 						{
 							continue;
 						}
 						petrolFactor = Integer.parseInt(petrolFactors[l]);
-						double totalCost = (g.getCost(driverIDs[l], pick) + g.getCost(pick, drop) + g.getCost(drop, driverIDs[l]))*petrolFactor;	
+						double totalCost = (g.getCost(homeNodeNums[l], pick) + g.getCost(pick, drop) + g.getCost(drop, homeNodeNums[l]))*petrolFactor;	
 						drivers.add(totalCost);
 						
 					
@@ -270,15 +277,15 @@ public class SimulatorTwo {
 					for(int m = 0; m < drivers.size(); m++) {
 						if(drivers.get(m)==min)
 						{
-							possibles.add(driverIDs[drivers.indexOf(drivers.get(m))]); 
+							possibles.add(homeNodeNums[drivers.indexOf(drivers.get(m))]); 
 						}	
 					}
 					
 					//choose driver with lowest node number
 					String home = Collections.min(possibles);
 					//get petrol factor for that driver
-					for (int t=0; t<driverIDs.length; t++) {
-						if(driverIDs[t]== home) {
+					for (int t=0; t<homeNodeNums.length; t++) {
+						if(homeNodeNums[t]== home) {
 							petrolFactor = Integer.parseInt(petrolFactors[t]);
 						}
 					}
@@ -315,6 +322,69 @@ public class SimulatorTwo {
 		g.printPath(home, cost); //from drop off to home
 		System.out.println("Total trip cost " + total_cost);
 		
+	}
+
+
+	/**
+    *Save current road network and driver positions to file. 
+    *
+    */ 
+	public void loadGraphState() {
+
+		//read from file
+		ArrayList<String> graphInfo = new ArrayList<String>();
+		try {
+			File myObj = new File("graph_state.txt");
+      		Scanner myReader = new Scanner(myObj);
+      		while (myReader.hasNextLine()) {
+        		String data = myReader.nextLine();
+				graphInfo.add(data);
+        		//System.out.println(data);
+      		}
+      		myReader.close();
+		}
+		catch (IOException e) {
+      		System.out.println("An error occurred.");
+      		e.printStackTrace();
+
+		}
+		graphState = new LinkedHashMap<>(); //maintains relative order of entries
+		for (int i = 0 ; i < graphInfo.size(); i++)
+		{
+			String[] key_value = graphInfo.get(i).split(":");
+			if(key_value.length == 1)
+			{
+				continue; //if field is empty
+			}
+			System.out.println(key_value[1].length());
+			String value = key_value[1].substring(1, key_value[1].length()); //remove preceding white space from each value
+			graphState.put(key_value[0], value); 
+		}
+
+	}
+
+	/**
+    *Load previous road network and driver settings. 
+    *
+    */ 
+	public void saveGraphState() {
+
+		try {
+			//write to file
+			File myFile = new File("graph_state.txt");
+			FileWriter myWriter = new FileWriter("graph_state.txt");
+			for (Map.Entry<String, String> entry : graphState.entrySet()) {
+    			String key = entry.getKey();
+    			String value = entry.getValue();
+				myWriter.write(key + ": " + value + "\n");	
+			}
+      		myWriter.close();
+		}
+		catch (IOException e) {
+      		System.out.println("An error occurred.");
+      		e.printStackTrace();
+
+		}
 	}
 	
 	
